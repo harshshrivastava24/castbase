@@ -1,9 +1,10 @@
-import assert from "node:assert";
-import test from "node:test";
-import { APP_NAME } from "./brand.js";
+import { describe, it, expect } from "vitest";
+import { APP_NAME } from "./brand";
 
-test("APP_NAME defaults to BackendGen or environment variable", () => {
-  assert.ok(typeof APP_NAME === "string");
-  assert.ok(APP_NAME.length > 0);
-  assert.strictEqual(APP_NAME, "BackendGen");
+describe("brand config", () => {
+  it("APP_NAME defaults to BackendGen or environment variable", () => {
+    expect(typeof APP_NAME).toBe("string");
+    expect(APP_NAME.length).toBeGreaterThan(0);
+    expect(APP_NAME).toBe("BackendGen");
+  });
 });
