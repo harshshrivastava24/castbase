@@ -3,4 +3,5 @@ packages:
   - 'apps/*'
   - 'targets/*/*'
 allowBuilds:
+  esbuild: true
   mongodb-memory-server: true
