@@ -28,6 +28,7 @@ export const WelcomeScreen: React.FC = () => {
     (s) => s.setIsImportModalOpen
   );
   const ir = useProjectStore((s) => s.ir);
+  const setActiveTab = useProjectStore((s) => s.setActiveTab);
   const updateProjectConfig = useProjectStore((s) => s.updateProjectConfig);
 
   const maxChars = 350;
@@ -119,6 +120,25 @@ export const WelcomeScreen: React.FC = () => {
             Synthesize a relational or document backend with natural language, SQL DDL, or pre-built architectural blueprints.
           </p>
         </div>
+
+        {/* Active model banner if entities are loaded */}
+        {ir.entities.length > 0 && (
+          <div className="px-4 py-2.5 rounded-md bg-accent-primary/10 border border-accent-primary/30 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-txt-primary">
+              <span className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
+              <span>
+                Active Model Configured: <strong>{ir.project.name}</strong> ({ir.entities.length} entities)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("model")}
+              className="px-3.5 py-1 rounded-pill bg-accent-primary text-accent-primary-fg font-mono text-xs font-bold hover:opacity-90 transition-opacity"
+            >
+              Open Canvas →
+            </button>
+          </div>
+        )}
 
         {/* 1. Unified Composer Card */}
         <div className="bg-surface border border-border-subtle rounded-lg shadow-sm flex flex-col overflow-hidden transition-all focus-within:border-border-focus">

@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "@xyflow/react/dist/style.css";
 
 @tailwind base;
 @tailwind components;
@@ -40,4 +41,77 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* React Flow styling overrides */
+.react-flow__pane {
+  background-color: var(--bg-canvas);
+}
+
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background-color: var(--border-subtle);
+  border: 1.5px solid var(--bg-surface);
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.react-flow__handle:hover,
+.react-flow__handle.connectingto,
+.react-flow__handle.valid {
+  background-color: var(--accent-primary);
+  transform: scale(1.25);
+}
+
+.react-flow__minimap {
+  background-color: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-node) !important;
+}
+
+.react-flow__controls {
+  box-shadow: none !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden !important;
+  background-color: var(--bg-surface) !important;
+}
+
+.react-flow__controls-button {
+  background-color: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+  fill: var(--text-secondary) !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--bg-surface-elevated) !important;
+  color: var(--text-primary) !important;
+  fill: var(--text-primary) !important;
+}
+
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* Edge Dash Animation (Respects prefers-reduced-motion) */
+@keyframes obsidian-edge-dash {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.obsidian-edge-animated {
+  animation: obsidian-edge-dash 1.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obsidian-edge-animated {
+    animation: none !important;
+  }
 }
