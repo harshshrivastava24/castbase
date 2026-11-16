@@ -11,6 +11,7 @@ import {
   type Relation,
   type IRValidationError,
   type SchemaFormat,
+  type EndpointOp,
 } from "@schemaflow/ir-schema";
 import { getTemplateIR } from "../templates/starterTemplates";
 
@@ -18,6 +19,7 @@ export type DisplayMode = "simple" | "advanced";
 export type ThemeMode = "dark" | "light";
 export type ActiveTab = "model" | "api" | "auth" | "build" | "preview";
 export type ImportKind = SchemaFormat;
+export type EntityColor = "lime" | "coral" | "teal" | "amber" | "violet" | "sky";
 
 export const createEmptyIR = (
   name = "untitled-project",
@@ -52,6 +54,7 @@ export interface ProjectState {
   isPreviewOpen: boolean;
   isImportModalOpen: boolean;
   importModalKind: ImportKind;
+  isInspectorOpen: boolean;
 
   // Actions
   setTheme: (theme: ThemeMode) => void;
@@ -62,6 +65,8 @@ export interface ProjectState {
   setSelectedEdge: (id: string | null) => void;
   setIsPreviewOpen: (open: boolean) => void;
   setIsImportModalOpen: (open: boolean, kind?: ImportKind) => void;
+  setIsInspectorOpen: (open: boolean) => void;
+  toggleInspector: () => void;
 
   loadTemplate: (name: "blog" | "shop" | "tracker") => void;
   importSchemaText: (
@@ -82,7 +87,15 @@ export interface ProjectState {
   ) => void;
   removeField: (entityId: string, fieldId: string) => void;
   addRelation: (relation: Relation) => void;
+  updateRelation: (id: string, patch: Partial<Relation>) => void;
   deleteRelation: (id: string) => void;
+  connectRelation: (params: {
+    fromEntityId: string;
+    toEntityId: string;
+    kind?: "one-to-one" | "one-to-many" | "many-to-many";
+  }) => void;
+  updateEntityColor: (entityId: string, color: EntityColor) => void;
+  recomputeLayout: () => void;
   updateNodePosition: (
     entityId: string,
     pos: { x: number; y: number }
@@ -91,7 +104,10 @@ export interface ProjectState {
     entityId: string,
     op: "list" | "get" | "create" | "update" | "delete"
   ) => void;
+  setEndpointAuthRequired: (entityId: string, authRequired: boolean) => void;
   setAuthEnabled: (enabled: boolean) => void;
+  setAuthRoles: (roles: string[]) => void;
+  toggleAuthRole: (role: string) => void;
   resetProject: () => void;
 }
 
@@ -137,6 +153,7 @@ export const useProjectStore = create<ProjectState>()(
         isPreviewOpen: false,
         isImportModalOpen: false,
         importModalKind: "auto",
+        isInspectorOpen: true,
 
         setTheme: (theme) => {
           if (typeof document !== "undefined") {
@@ -158,6 +175,9 @@ export const useProjectStore = create<ProjectState>()(
         setIsPreviewOpen: (isPreviewOpen) => set({ isPreviewOpen }),
         setIsImportModalOpen: (isImportModalOpen, kind = "auto") =>
           set({ isImportModalOpen, importModalKind: kind }),
+        setIsInspectorOpen: (isInspectorOpen) => set({ isInspectorOpen }),
+        toggleInspector: () =>
+          set((s) => ({ isInspectorOpen: !s.isInspectorOpen })),
 
         loadTemplate: (name) => {
           const template = getTemplateIR(name);
@@ -417,6 +437,110 @@ export const useProjectStore = create<ProjectState>()(
           set({ ir: nextIR, validationErrors: validation.errors });
         },
 
+        updateRelation: (id, patch) => {
+          const current = get().ir;
+          const nextRelations = current.relations.map((r) =>
+            r.id === id ? { ...r, ...patch } : r
+          );
+          const nextIR: IRDocument = {
+            ...current,
+            relations: nextRelations,
+          };
+          const validation = validateIR(nextIR);
+          set({ ir: nextIR, validationErrors: validation.errors });
+        },
+
+        connectRelation: ({ fromEntityId, toEntityId, kind = "one-to-many" }) => {
+          const current = get().ir;
+          // Avoid duplicate relations
+          const existing = current.relations.find(
+            (r) => r.fromEntityId === fromEntityId && r.toEntityId === toEntityId
+          );
+          if (existing) return;
+
+          const toEntity = current.entities.find((e) => e.id === toEntityId);
+          const fromEntity = current.entities.find((e) => e.id === fromEntityId);
+          if (!toEntity || !fromEntity) return;
+
+          const relId = `rel_${fromEntity.name.toLowerCase()}_${toEntity.name.toLowerCase()}_${Date.now().toString(36)}`;
+          
+          let foreignKeyField: string | undefined = undefined;
+          let nextEntities = current.entities;
+
+          if (kind !== "many-to-many") {
+            // Find or create FK field on toEntity
+            const targetPk = fromEntity.fields.find((f) => f.isPrimaryKey);
+            const fkName = `${fromEntity.name.toLowerCase()}Id`;
+            const existingFk = toEntity.fields.find((f) => f.name === fkName);
+            if (!existingFk) {
+              const newFk: Field = {
+                id: `fld_${toEntity.id}_${fkName}`,
+                name: fkName,
+                type: targetPk?.type || "uuid",
+                required: false,
+                unique: kind === "one-to-one",
+              };
+              nextEntities = current.entities.map((e) =>
+                e.id === toEntityId
+                  ? { ...e, fields: [...e.fields, newFk] }
+                  : e
+              );
+            }
+            foreignKeyField = fkName;
+          }
+
+          const newRelation: Relation = {
+            id: relId,
+            fromEntityId,
+            toEntityId,
+            kind,
+            ...(foreignKeyField ? { foreignKeyField, onDelete: "CASCADE" } : {}),
+          };
+
+          const nextIR: IRDocument = {
+            ...current,
+            entities: nextEntities,
+            relations: [...current.relations, newRelation],
+          };
+          const validation = validateIR(nextIR);
+          set({ ir: nextIR, validationErrors: validation.errors });
+        },
+
+        updateEntityColor: (entityId, color) => {
+          const current = get().ir;
+          const currentLayout = current.layout || { nodes: {} };
+          const currentNode = currentLayout.nodes[entityId] || { x: 100, y: 100 };
+
+          const nextIR: IRDocument = {
+            ...current,
+            layout: {
+              ...currentLayout,
+              nodes: {
+                ...currentLayout.nodes,
+                [entityId]: {
+                  ...currentNode,
+                  color,
+                },
+              },
+            },
+          };
+          set({ ir: nextIR });
+        },
+
+        recomputeLayout: () => {
+          const current = get().ir;
+          if (current.entities.length === 0) return;
+          const computed = computeDagreLayout(
+            current.entities,
+            current.relations
+          );
+          const nextIR: IRDocument = {
+            ...current,
+            layout: computed,
+          };
+          set({ ir: nextIR });
+        },
+
         deleteRelation: (id) => {
           const current = get().ir;
           const nextIR: IRDocument = {
@@ -479,6 +603,62 @@ export const useProjectStore = create<ProjectState>()(
           const nextIR: IRDocument = {
             ...current,
             endpoints: nextEndpoints,
+          };
+          const validation = validateIR(nextIR);
+          set({ ir: nextIR, validationErrors: validation.errors });
+        },
+
+        setEndpointAuthRequired: (entityId, authRequired) => {
+          const current = get().ir;
+          const existing = current.endpoints.find((ep) => ep.entityId === entityId);
+          let nextEndpoints;
+          if (!existing) {
+            nextEndpoints = [
+              ...current.endpoints,
+              {
+                entityId,
+                ops: ["list", "get", "create", "update", "delete"] as EndpointOp[],
+                authRequired,
+              },
+            ];
+          } else {
+            nextEndpoints = current.endpoints.map((ep) =>
+              ep.entityId === entityId ? { ...ep, authRequired } : ep
+            );
+          }
+          const nextIR: IRDocument = {
+            ...current,
+            endpoints: nextEndpoints,
+          };
+          const validation = validateIR(nextIR);
+          set({ ir: nextIR, validationErrors: validation.errors });
+        },
+
+        setAuthRoles: (roles) => {
+          const current = get().ir;
+          const nextIR: IRDocument = {
+            ...current,
+            auth: {
+              ...current.auth,
+              roles,
+            },
+          };
+          const validation = validateIR(nextIR);
+          set({ ir: nextIR, validationErrors: validation.errors });
+        },
+
+        toggleAuthRole: (role) => {
+          const current = get().ir;
+          const roles = current.auth.roles || [];
+          const nextRoles = roles.includes(role)
+            ? roles.filter((r) => r !== role)
+            : [...roles, role];
+          const nextIR: IRDocument = {
+            ...current,
+            auth: {
+              ...current.auth,
+              roles: nextRoles,
+            },
           };
           const validation = validateIR(nextIR);
           set({ ir: nextIR, validationErrors: validation.errors });
