@@ -2,19 +2,20 @@
 
 import React, { useState } from "react";
 import {
+  BaseEdge,
   getBezierPath,
   EdgeLabelRenderer,
   type EdgeProps,
 } from "@xyflow/react";
 import { useProjectStore, type EntityColor } from "../../store/useProjectStore";
 
-const COLOR_MAP: Record<EntityColor, string> = {
-  lime: "var(--entity-lime)",
-  coral: "var(--entity-coral)",
-  teal: "var(--entity-teal)",
-  amber: "var(--entity-amber)",
-  violet: "var(--entity-violet)",
-  sky: "var(--entity-sky)",
+const HEX_COLOR_MAP: Record<EntityColor, string> = {
+  lime: "#2CA58D",
+  coral: "#C96A5B",
+  teal: "#3B8EA5",
+  amber: "#C99A5B",
+  violet: "#7C72A0",
+  sky: "#5E9E7E",
 };
 
 export const ObsidianRelationEdge: React.FC<EdgeProps> = ({
@@ -31,6 +32,7 @@ export const ObsidianRelationEdge: React.FC<EdgeProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const ir = useProjectStore((s) => s.ir);
+  const theme = useProjectStore((s) => s.theme);
   const displayMode = useProjectStore((s) => s.displayMode);
   const selectedEdgeId = useProjectStore((s) => s.selectedEdgeId);
   const setSelectedEdge = useProjectStore((s) => s.setSelectedEdge);
@@ -42,7 +44,7 @@ export const ObsidianRelationEdge: React.FC<EdgeProps> = ({
   const sourceColorName: EntityColor =
     (fromEntityId && (ir.layout?.nodes?.[fromEntityId]?.color as EntityColor)) ||
     "teal";
-  const accentColor = COLOR_MAP[sourceColorName] || "var(--accent-primary)";
+  const activeColor = HEX_COLOR_MAP[sourceColorName] || "#2CA58D";
 
   const isSelected = selected || selectedEdgeId === id;
   const isActive = isSelected || isHovered;
@@ -57,6 +59,8 @@ export const ObsidianRelationEdge: React.FC<EdgeProps> = ({
   });
 
   const isManyToMany = kind === "many-to-many";
+  const restColor = theme === "dark" ? "#384C57" : "#A0B0B8";
+  const strokeColor = isActive ? activeColor : restColor;
 
   // Label text formatted for Simple vs Advanced mode
   const getBadgeLabel = () => {
@@ -104,27 +108,27 @@ export const ObsidianRelationEdge: React.FC<EdgeProps> = ({
           <path
             d={edgePath}
             fill="none"
-            stroke={accentColor}
+            stroke={activeColor}
             strokeWidth={6}
             strokeOpacity={0.25}
             strokeLinecap="round"
             className="transition-all duration-200"
             style={{
-              filter: `drop-shadow(0 0 3px ${accentColor})`,
+              filter: `drop-shadow(0 0 4px ${activeColor})`,
             }}
           />
         )}
 
-        {/* Core Crisp 1.5px Edge Path */}
-        <path
-          d={edgePath}
-          fill="none"
-          stroke={isActive ? accentColor : "var(--border-subtle)"}
-          strokeWidth={1.5}
-          strokeDasharray={isManyToMany || isActive ? "5 4" : undefined}
-          className={`transition-colors duration-200 ${
-            isActive ? "obsidian-edge-animated" : ""
-          }`}
+        {/* Core Crisp 2px BaseEdge Path */}
+        <BaseEdge
+          path={edgePath}
+          style={{
+            stroke: strokeColor,
+            strokeWidth: 2,
+            fill: "none",
+            strokeDasharray: isManyToMany || isActive ? "5 4" : undefined,
+          }}
+          className={isActive ? "obsidian-edge-animated" : undefined}
         />
       </g>
 

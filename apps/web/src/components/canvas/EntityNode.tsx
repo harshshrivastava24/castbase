@@ -125,7 +125,17 @@ export const EntityNode = memo(function EntityNode({
       />
 
       {/* Node Header */}
-      <div className="px-3 py-2.5 flex items-center justify-between border-b border-border-subtle bg-surface-elevated/60">
+      <div className="px-3 py-2.5 flex items-center justify-between border-b border-border-subtle bg-surface-elevated/60 relative">
+        {/* Table-level Target Handle (Left) */}
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="target"
+          isConnectable={true}
+          className="!left-[-5px] !w-2.5 !h-2.5 !bg-[#2CA58D] !border-2 !border-[#0C1317] !z-20 cursor-crosshair transition-transform hover:scale-125"
+          style={{ pointerEvents: "all" }}
+        />
+
         <div className="flex items-center gap-2 overflow-hidden">
           <span
             className="w-2 h-2 rounded-full shrink-0"
@@ -157,6 +167,16 @@ export const EntityNode = memo(function EntityNode({
             </span>
           )}
         </div>
+
+        {/* Table-level Source Handle (Right) */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="source"
+          isConnectable={true}
+          className="!right-[-5px] !w-2.5 !h-2.5 !bg-[#2CA58D] !border-2 !border-[#0C1317] !z-20 cursor-crosshair transition-transform hover:scale-125"
+          style={{ pointerEvents: "all" }}
+        />
       </div>
 
       {/* Field Rows — Flat horizontal hairlines (no nested boxes) */}
@@ -181,7 +201,9 @@ export const EntityNode = memo(function EntityNode({
                 type="target"
                 position={Position.Left}
                 id={`target-${field.name}`}
-                className="!left-[-4px] !w-2 !h-2 !bg-border-subtle hover:!bg-accent-primary !border-surface"
+                isConnectable={true}
+                className="!left-[-5px] !w-2.5 !h-2.5 !bg-[#2CA58D] !border-2 !border-[#0C1317] !z-20 cursor-crosshair transition-transform hover:scale-125"
+                style={{ pointerEvents: "all" }}
               />
 
               {/* Left: Metadata Badges & Field Name */}
@@ -253,7 +275,9 @@ export const EntityNode = memo(function EntityNode({
                 type="source"
                 position={Position.Right}
                 id={`source-${field.name}`}
-                className="!right-[-4px] !w-2 !h-2 !bg-border-subtle hover:!bg-accent-primary !border-surface"
+                isConnectable={true}
+                className="!right-[-5px] !w-2.5 !h-2.5 !bg-[#2CA58D] !border-2 !border-[#0C1317] !z-20 cursor-crosshair transition-transform hover:scale-125"
+                style={{ pointerEvents: "all" }}
               />
             </div>
           );

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useMemo, useEffect } from "react";
+import "@xyflow/react/dist/style.css";
+import React, { useCallback, useMemo, useEffect, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -25,19 +26,6 @@ const nodeTypes = {
   entityNode: EntityNode,
 };
 
-const edgeTypes = {
-  obsidianEdge: ObsidianRelationEdge,
-};
-
-const COLOR_MAP: Record<EntityColor, string> = {
-  lime: "#2CA58D",
-  coral: "#C96A5B",
-  teal: "#3B8EA5",
-  amber: "#C99A5B",
-  violet: "#7C72A0",
-  sky: "#5E9E7E",
-};
-
 export const BackendCanvasInner: React.FC = () => {
   const ir = useProjectStore((s) => s.ir);
   const theme = useProjectStore((s) => s.theme);
@@ -50,13 +38,21 @@ export const BackendCanvasInner: React.FC = () => {
   const deleteEntity = useProjectStore((s) => s.deleteEntity);
   const deleteRelation = useProjectStore((s) => s.deleteRelation);
 
-  // Transform IR entities into React Flow nodes
-  const nodes: Node[] = useMemo(() => {
+  const edgeTypes = useMemo(
+    () => ({
+      obsidian: ObsidianRelationEdge,
+      obsidianEdge: ObsidianRelationEdge,
+    }),
+    []
+  );
+
+  // Helper to build nodes from IR
+  const buildNodes = useCallback((): Node[] => {
     return ir.entities.map((entity, idx) => {
       const nodeLayout = ir.layout?.nodes?.[entity.id];
       const position = nodeLayout
         ? { x: nodeLayout.x, y: nodeLayout.y }
-        : { x: 100 + (idx % 3) * 300, y: 100 + Math.floor(idx / 3) * 260 };
+        : { x: 100 + (idx % 3) * 320, y: 100 + Math.floor(idx / 3) * 280 };
 
       return {
         id: entity.id,
@@ -71,32 +67,45 @@ export const BackendCanvasInner: React.FC = () => {
     });
   }, [ir.entities, ir.layout, selectedNodeId]);
 
-  // Transform IR relations into React Flow edges
-  const edges: Edge[] = useMemo(() => {
+  // Helper to build edges from IR
+  const buildEdges = useCallback((): Edge[] => {
     return ir.relations.map((relation) => {
       const isSelected = selectedEdgeId === relation.id;
       return {
         id: relation.id,
-        type: "obsidianEdge",
         source: relation.fromEntityId,
         target: relation.toEntityId,
-        sourceHandle: relation.foreignKeyField
-          ? `source-${relation.foreignKeyField}`
-          : undefined,
-        targetHandle: relation.foreignKeyField
-          ? `target-${relation.foreignKeyField}`
-          : undefined,
-        data: {
-          fromEntityId: relation.fromEntityId,
-          toEntityId: relation.toEntityId,
-          kind: relation.kind,
-        },
+        type: "obsidian",
+        data: relation as unknown as Record<string, unknown>,
         selected: isSelected,
       };
     });
   }, [ir.relations, selectedEdgeId]);
 
-  // Sync node drag completion to ir.layout.nodes[id] (FR-14)
+  // Local state for 60fps real-time dragging & interactive rendering
+  const [nodes, setNodes] = useState<Node[]>(buildNodes);
+  const [edges, setEdges] = useState<Edge[]>(buildEdges);
+
+  // Sync nodes when ir.entities, ir.layout, or selectedNodeId changes
+  useEffect(() => {
+    setNodes(buildNodes());
+  }, [buildNodes]);
+
+  // Sync edges when ir.relations or selectedEdgeId changes
+  useEffect(() => {
+    setEdges(buildEdges());
+  }, [buildEdges]);
+
+  // Live node movement on every animation frame during mouse drag
+  const onNodesChange: OnNodesChange = useCallback((changes) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
+  }, []);
+
+  const onEdgesChange: OnEdgesChange = useCallback((changes) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+  }, []);
+
+  // Sync final coordinates to Zustand ir.layout.nodes[id] on drag release
   const onNodeDragStop: OnNodeDrag = useCallback(
     (_event, node) => {
       updateNodePosition(node.id, {
@@ -107,11 +116,11 @@ export const BackendCanvasInner: React.FC = () => {
     [updateNodePosition]
   );
 
-  // Edge connection handler
+  // Edge connection handler creating valid relations in store
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
-      if (connection.source === connection.target) return; // Prevent self-connections without explicit intent
+      if (connection.source === connection.target) return;
 
       connectRelation({
         fromEntityId: connection.source,
@@ -125,7 +134,6 @@ export const BackendCanvasInner: React.FC = () => {
   // Keyboard shortcuts (Delete, Undo, Redo, Save) (FR-06)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing inside input, textarea, or select
       const activeEl = document.activeElement;
       const isInput =
         activeEl?.tagName === "INPUT" ||
@@ -153,7 +161,6 @@ export const BackendCanvasInner: React.FC = () => {
         useProjectStore.temporal?.getState()?.redo();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        // Guest mode saves to localStorage automatically
       }
     };
 
@@ -175,6 +182,8 @@ export const BackendCanvasInner: React.FC = () => {
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
         onConnect={onConnect}
         onNodeClick={(_e, node) => setSelectedNode(node.id)}
@@ -197,12 +206,20 @@ export const BackendCanvasInner: React.FC = () => {
         />
 
         <MiniMap
-          nodeColor={(n) => {
-            const color = (n.data as any)?.color as EntityColor;
-            return COLOR_MAP[color] || "#2CA58D";
+          nodeColor={(_node) => (theme === "dark" ? "#2CA58D" : "#135E54")}
+          nodeStrokeColor={theme === "dark" ? "#24353F" : "#D6DFE2"}
+          maskColor={
+            theme === "dark"
+              ? "rgba(12, 19, 23, 0.75)"
+              : "rgba(238, 242, 243, 0.75)"
+          }
+          style={{
+            backgroundColor: theme === "dark" ? "#131D23" : "#FFFFFF",
+            border: `1px solid ${theme === "dark" ? "#24353F" : "#D6DFE2"}`,
+            borderRadius: "8px",
           }}
-          nodeStrokeWidth={2}
-          maskColor={theme === "dark" ? "rgba(12, 19, 23, 0.75)" : "rgba(238, 242, 243, 0.75)"}
+          pannable
+          zoomable
           className="!bottom-6 !right-6"
         />
 
