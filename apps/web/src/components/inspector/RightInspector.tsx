@@ -42,9 +42,28 @@ const FIELD_TYPES: { type: FieldType; label: string; simpleLabel: string }[] = [
 ];
 
 export const RightInspector: React.FC = () => {
+  const [width, setWidth] = useState<number>(420);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"fields" | "api" | "rules">("fields");
   const [newRelTargetId, setNewRelTargetId] = useState<string>("");
   const [newRelKind, setNewRelKind] = useState<RelationKind>("one-to-many");
+
+  React.useEffect(() => {
+    if (!isResizing) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX;
+      setWidth(Math.min(640, Math.max(340, newWidth)));
+    };
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
 
   const ir = useProjectStore((s) => s.ir);
   const selectedNodeId = useProjectStore((s) => s.selectedNodeId);
@@ -112,7 +131,20 @@ export const RightInspector: React.FC = () => {
   };
 
   return (
-    <aside className="w-[340px] bg-inspector border-l border-border-subtle flex flex-col justify-between select-none z-30 shrink-0 h-full overflow-hidden shadow-2xl">
+    <aside
+      style={{ width: `${width}px` }}
+      className="relative bg-inspector border-l border-border-subtle flex flex-col justify-between select-none z-30 shrink-0 h-full overflow-hidden shadow-2xl"
+    >
+      {/* Horizontal Resize Drag Handle */}
+      <div
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setIsResizing(true);
+        }}
+        className={`absolute top-0 left-0 bottom-0 w-1 cursor-col-resize hover:bg-accent-primary/60 transition-colors z-40 ${
+          isResizing ? "bg-accent-primary" : "bg-transparent"
+        }`}
+      />
       {/* 1. Top Header */}
       <div className="border-b border-border-subtle bg-surface-elevated/80 flex flex-col">
         {/* Mode & Close toolbar */}
@@ -285,7 +317,7 @@ export const RightInspector: React.FC = () => {
                     }`}
                   >
                     {/* Row 1: Name & Type Selector */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <input
                         type="text"
                         value={field.name}
@@ -295,7 +327,7 @@ export const RightInspector: React.FC = () => {
                             name: e.target.value,
                           })
                         }
-                        className={`flex-1 px-2 py-1 bg-canvas border border-border-subtle rounded text-xs text-txt-primary focus:border-border-focus outline-none ${
+                        className={`flex-1 min-w-0 px-2 py-1 bg-canvas border border-border-subtle rounded text-xs text-txt-primary focus:border-border-focus outline-none ${
                           field.isPrimaryKey ? "font-semibold" : "font-mono"
                         }`}
                       />
@@ -308,7 +340,7 @@ export const RightInspector: React.FC = () => {
                             type: e.target.value as FieldType,
                           })
                         }
-                        className="w-28 px-1.5 py-1 bg-canvas border border-border-subtle rounded font-mono text-[10px] text-txt-secondary focus:border-border-focus outline-none"
+                        className="w-28 shrink-0 px-1.5 py-1 bg-canvas border border-border-subtle rounded font-mono text-[10px] text-txt-secondary focus:border-border-focus outline-none"
                       >
                         {FIELD_TYPES.map((ft) => (
                           <option key={ft.type} value={ft.type}>
@@ -324,7 +356,7 @@ export const RightInspector: React.FC = () => {
                             removeField(selectedEntity.id, field.id)
                           }
                           title="Remove column"
-                          className="p-1 rounded text-txt-muted hover:text-accent-danger hover:bg-surface-elevated transition-colors"
+                          className="p-1 shrink-0 rounded text-txt-muted hover:text-accent-danger hover:bg-surface-elevated transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -332,8 +364,8 @@ export const RightInspector: React.FC = () => {
                     </div>
 
                     {/* Row 2: Constraints (Required, Unique) & Default */}
-                    <div className="flex items-center justify-between text-[11px] font-mono text-txt-secondary">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-txt-secondary min-w-0 overflow-x-hidden">
+                      <div className="flex items-center gap-3 shrink-0">
                         <label className="flex items-center gap-1 cursor-pointer">
                           <input
                             type="checkbox"
@@ -366,7 +398,7 @@ export const RightInspector: React.FC = () => {
                       </div>
 
                       {field.isPrimaryKey && (
-                        <span className="text-[10px] text-accent-secondary font-bold">
+                        <span className="text-[10px] text-accent-secondary font-bold shrink-0">
                           PRIMARY KEY
                         </span>
                       )}
@@ -385,7 +417,7 @@ export const RightInspector: React.FC = () => {
                               default: e.target.value || undefined,
                             })
                           }
-                          className="w-24 px-1.5 py-0.5 bg-canvas border border-border-subtle rounded text-[10px] font-mono text-txt-muted focus:text-txt-primary outline-none"
+                          className="w-24 shrink-0 px-1.5 py-0.5 bg-canvas border border-border-subtle rounded text-[10px] font-mono text-txt-muted focus:text-txt-primary outline-none"
                         />
                       )}
                     </div>
@@ -462,11 +494,11 @@ export const RightInspector: React.FC = () => {
                 return (
                   <div
                     key={endpoint.op}
-                    className="p-2.5 flex items-center justify-between hover:bg-surface-elevated/40 transition-colors"
+                    className="p-2.5 flex items-center justify-between gap-2 hover:bg-surface-elevated/40 transition-colors min-w-0"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
                           endpoint.method === "GET"
                             ? "bg-entity-teal/15 text-entity-teal"
                             : endpoint.method === "POST"
@@ -478,7 +510,7 @@ export const RightInspector: React.FC = () => {
                       >
                         {endpoint.method}
                       </span>
-                      <span className="text-[11px] text-txt-primary">
+                      <span className="text-[11px] text-txt-primary truncate">
                         {endpoint.path}
                       </span>
                     </div>
@@ -489,7 +521,7 @@ export const RightInspector: React.FC = () => {
                       onChange={() =>
                         toggleEndpointOp(selectedEntity.id, endpoint.op)
                       }
-                      className="rounded border-border-subtle text-accent-primary cursor-pointer"
+                      className="rounded border-border-subtle text-accent-primary cursor-pointer shrink-0"
                     />
                   </div>
                 );
@@ -519,25 +551,25 @@ export const RightInspector: React.FC = () => {
                     const otherEntity = ir.entities.find((e) => e.id === otherEntityId);
 
                     return (
-                      <div key={rel.id} className="p-2.5 flex flex-col gap-1.5 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-txt-primary flex items-center gap-1.5">
-                            <span className="font-mono text-[10px] text-txt-muted">
+                      <div key={rel.id} className="p-2.5 flex flex-col gap-1.5 text-xs min-w-0">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="font-semibold text-txt-primary flex items-center gap-1.5 min-w-0 truncate">
+                            <span className="font-mono text-[10px] text-txt-muted shrink-0">
                               {isSource ? "→" : "←"}
                             </span>
-                            <span>{otherEntity?.name || "Unknown"}</span>
+                            <span className="truncate">{otherEntity?.name || "Unknown"}</span>
                           </span>
 
                           <button
                             type="button"
                             onClick={() => deleteRelation(rel.id)}
-                            className="p-1 rounded text-txt-muted hover:text-accent-danger hover:bg-surface-elevated transition-colors"
+                            className="p-1 shrink-0 rounded text-txt-muted hover:text-accent-danger hover:bg-surface-elevated transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono min-w-0">
                           <select
                             value={rel.kind}
                             onChange={(e) =>
@@ -545,7 +577,7 @@ export const RightInspector: React.FC = () => {
                                 kind: e.target.value as RelationKind,
                               })
                             }
-                            className="px-1.5 py-0.5 bg-canvas border border-border-subtle rounded text-txt-secondary outline-none text-[10px]"
+                            className="w-full min-w-0 px-1.5 py-0.5 bg-canvas border border-border-subtle rounded text-txt-secondary outline-none text-[10px] truncate"
                           >
                             <option value="one-to-one">1 : 1 (One-to-One)</option>
                             <option value="one-to-many">1 : N (One-to-Many)</option>
@@ -559,7 +591,7 @@ export const RightInspector: React.FC = () => {
                                 onDelete: e.target.value as OnDeleteAction,
                               })
                             }
-                            className="px-1.5 py-0.5 bg-canvas border border-border-subtle rounded text-txt-secondary outline-none text-[10px]"
+                            className="w-full min-w-0 px-1.5 py-0.5 bg-canvas border border-border-subtle rounded text-txt-secondary outline-none text-[10px] truncate"
                           >
                             <option value="CASCADE">ON DELETE CASCADE</option>
                             <option value="SET_NULL">ON DELETE SET NULL</option>
@@ -574,15 +606,15 @@ export const RightInspector: React.FC = () => {
 
               {/* Add Relation Inline Form */}
               {availableTargets.length > 0 && (
-                <div className="p-2.5 bg-surface border border-border-subtle rounded-md flex flex-col gap-2">
+                <div className="p-2.5 bg-surface border border-border-subtle rounded-md flex flex-col gap-2 min-w-0">
                   <span className="text-[10px] font-mono uppercase text-txt-muted">
                     Connect New Relation:
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <select
                       value={newRelTargetId}
                       onChange={(e) => setNewRelTargetId(e.target.value)}
-                      className="flex-1 px-2 py-1 bg-canvas border border-border-subtle rounded text-xs text-txt-primary outline-none"
+                      className="flex-1 min-w-0 px-2 py-1 bg-canvas border border-border-subtle rounded text-xs text-txt-primary outline-none truncate"
                     >
                       <option value="">Select Target Entity...</option>
                       {availableTargets.map((t) => (
@@ -595,7 +627,7 @@ export const RightInspector: React.FC = () => {
                       type="button"
                       disabled={!newRelTargetId}
                       onClick={handleAddRelation}
-                      className={`px-2.5 py-1 rounded bg-accent-primary text-accent-primary-fg font-mono text-xs font-bold transition-all ${
+                      className={`px-2.5 py-1 rounded bg-accent-primary text-accent-primary-fg font-mono text-xs font-bold transition-all shrink-0 ${
                         !newRelTargetId ? "opacity-50" : "hover:opacity-90"
                       }`}
                     >
