@@ -7,6 +7,7 @@ import { WelcomeScreen } from "../components/welcome/WelcomeScreen";
 import { BackendCanvas } from "../components/canvas/BackendCanvas";
 import { RightInspector } from "../components/inspector/RightInspector";
 import { ImportModal } from "../components/importer/ImportModal";
+import { PreviewDrawer } from "../components/preview/PreviewDrawer";
 import { useProjectStore } from "../store/useProjectStore";
 
 export default function HomePage() {
@@ -39,6 +40,7 @@ export default function HomePage() {
         </main>
       </div>
       <ImportModal />
+      <PreviewDrawer />
     </div>
   );
 }
