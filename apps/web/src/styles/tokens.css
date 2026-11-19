@@ -11,6 +11,7 @@
 /* 1. Dark Theme ([data-theme="dark"] — Default: Marine Petrol & Oxidized Seafoam) */
 :root,
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-canvas: #0C1317;
   --bg-dot-grid: #1B2830;
   --bg-surface: #131D23;
@@ -25,52 +26,91 @@
   --border-subtle: #24353F;
   --border-focus: #2CA58D;
 
-  --accent-primary: #2CA58D;       /* Oxidized Seafoam */
-  --accent-primary-fg: #081210;    /* Dark text on Seafoam CTA */
-  --accent-secondary: #C99A5B;     /* Ochre Sand for PK/type highlights */
+  --accent-primary: #2CA58D;
+  /* Oxidized Seafoam */
+  --accent-primary-fg: #081210;
+  /* Dark text on Seafoam CTA */
+  --accent-secondary: #C99A5B;
+  /* Ochre Sand for PK/type highlights */
   --accent-danger: #D9534F;
 
   /* 6-Color Entity Header & Edge Palette (Desaturated High-Craft Tones) */
-  --entity-lime: #2CA58D;          /* Seafoam (maps to 'lime' key in IR) */
-  --entity-coral: #C96A5B;         /* Muted Terracotta ('coral') */
-  --entity-teal: #3B8EA5;          /* Muted Teal ('teal') */
-  --entity-amber: #C99A5B;         /* Ochre Sand ('amber') */
-  --entity-violet: #7C72A0;        /* Dusty Iris ('violet') */
-  --entity-sky: #5E9E7E;           /* Forest Sage ('sky') */
+  --entity-lime: #2CA58D;
+  /* Seafoam (maps to 'lime' key in IR) */
+  --entity-coral: #C96A5B;
+  /* Muted Terracotta ('coral') */
+  --entity-teal: #3B8EA5;
+  /* Muted Teal ('teal') */
+  --entity-amber: #C99A5B;
+  /* Ochre Sand ('amber') */
+  --entity-violet: #7C72A0;
+  /* Dusty Iris ('violet') */
+  --entity-sky: #5E9E7E;
+  /* Forest Sage ('sky') */
 
   --shadow-node: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
-  --shadow-selected: 0 0 0 1.5px #2CA58D, 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+  --shadow-selected: 0 0 0 1.5px var(--border-focus), 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+
+  --accent-primary-hover: #35B89F;
+  --accent-primary-active: #249080;
+  --border-strong: #3A505C;
+  --accent-success: #5E9E7E;
+  --accent-warning: #C99A5B;
+  --text-disabled: #3F505A;
+  --font-sans: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-10: 40px;
 }
 
-/* 2. Light Theme (Arctic Mineral & Deep Spruce) */
+/* 2. LIGHT THEME (Low-Glare Architectural Stone & Deep Spruce — Zero Pure White) */
 [data-theme="light"] {
-  --bg-canvas: #EEF2F3;
-  --bg-dot-grid: #CBD5D8;
-  --bg-surface: #FFFFFF;
-  --bg-surface-elevated: #F5F8F9;
-  --bg-inspector: #FFFFFF;
-  --bg-footer: #E6ECEE;
+  color-scheme: light;
+  --bg-canvas: #DCE2E4;
+  /* Soft Slate Mist */
+  --bg-dot-grid: #B6C2C6;
+  --bg-surface: #E7ECEE;
+  /* Muted Cool Stone (replaces blinding #FFFFFF) */
+  --bg-surface-elevated: #EFF3F4;
+  /* Subtle lift for active tabs & inputs */
+  --bg-inspector: #E2E8EA;
+  /* Tinted Stone Sidebar */
+  --bg-footer: #D3DADF;
 
-  --text-primary: #111C21;
-  --text-secondary: #5A6B73;
-  --text-muted: #82949C;
+  --text-primary: #121E24;
+  /* Deep Nordic Ink */
+  --text-secondary: #485A62;
+  --text-muted: #6E8088;
 
-  --border-subtle: #D6DFE2;
+  --border-subtle: #BFC9CD;
   --border-focus: #135E54;
 
   --accent-primary: #135E54;
-  --accent-primary-fg: #FFFFFF;
-  --accent-secondary: #B07D3B;
-  --accent-danger: #C93B37;
+  /* Deep Baltic Spruce */
+  --accent-primary-fg: #EFF3F4;
+  --accent-secondary: #9E6B2B;
+  /* Warm Bronze */
+  --accent-danger: #B83632;
 
-  /* 6-Color Entity Header Palette */
+  /* 6-Color Entity Header Palette (Tuned for Stone Surfaces) */
   --entity-lime: #135E54;
-  --entity-coral: #B85446;
-  --entity-teal: #2B6F82;
-  --entity-amber: #B07D3B;
-  --entity-violet: #635985;
-  --entity-sky: #3E7B5E;
+  --entity-coral: #B04A3C;
+  --entity-teal: #236477;
+  --entity-amber: #9E6B2B;
+  --entity-violet: #5A507A;
+  --entity-sky: #346E52;
 
-  --shadow-node: 0 4px 16px -2px rgba(17, 28, 33, 0.08);
-  --shadow-selected: 0 0 0 1.5px #135E54, 0 4px 16px -2px rgba(17, 28, 33, 0.12);
+  --shadow-node: 0 4px 14px -2px rgba(18, 30, 36, 0.10);
+  --shadow-selected: 0 0 0 1.5px var(--border-focus), 0 6px 18px -2px rgba(18, 30, 36, 0.16);
+
+  --accent-primary-hover: #0F4E45;
+  --accent-primary-active: #0B3E37;
+  --border-strong: #8FA0A6;
+  --accent-success: #346E52;
+  --accent-warning: #9E6B2B;
+  --text-disabled: #8C9CA2;
 }
