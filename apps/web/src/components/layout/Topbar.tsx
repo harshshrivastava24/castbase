@@ -24,9 +24,17 @@ export const Topbar: React.FC = () => {
   const toggleTheme = useProjectStore((s) => s.toggleTheme);
   const activeTab = useProjectStore((s) => s.activeTab);
   const setActiveTab = useProjectStore((s) => s.setActiveTab);
+  const setIsPreviewOpen = useProjectStore((s) => s.setIsPreviewOpen);
   const displayMode = useProjectStore((s) => s.displayMode);
   const setDisplayMode = useProjectStore((s) => s.setDisplayMode);
   const updateProjectConfig = useProjectStore((s) => s.updateProjectConfig);
+
+  const handleTabClick = (tabId: ActiveTab) => {
+    setActiveTab(tabId);
+    if (tabId === "preview") {
+      setIsPreviewOpen(true);
+    }
+  };
 
   // Undo / Redo via zundo temporal
   const temporal = useProjectStore.temporal?.getState();
@@ -79,7 +87,7 @@ export const Topbar: React.FC = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all ${
                 isActive
                   ? "bg-surface text-txt-primary shadow-sm border border-border-subtle"
